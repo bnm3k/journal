@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "$id": "schema:dotenv",
+  "required": ["FOO"],
+  "properties": {
+    "NODE_ENV": {
+      "type": "string",
+      "default": "development"
+    },
+    "PORT": {
+      "type": "integer",
+      "default": 3000
+    },
+    "FOO": {
+      "type": "string"
+    }
+  }
+}
