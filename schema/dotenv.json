@@ -1,18 +1,20 @@
 {
   "type": "object",
   "$id": "schema:dotenv",
-  "required": ["FOO"],
+  "required": ["PG_URL"],
   "properties": {
     "NODE_ENV": {
       "type": "string",
-      "default": "development"
+      "default": "development",
+      "examples": ["development", "production"]
     },
     "PORT": {
       "type": "integer",
       "default": 3000
     },
-    "FOO": {
-      "type": "string"
+    "PG_URL": {
+      "type": "string",
+      "examples": ["postgres://user:password@host:5432/database"]
     }
   }
 }
