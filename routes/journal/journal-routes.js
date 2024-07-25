@@ -50,7 +50,7 @@ export default async function (fastify, opts) {
   // monthly
   fastify.route({
     method: "GET",
-    url: "/",
+    url: "/summary",
     handler: async function getSummary(request, reply) {
       return { data: [], totalCount: 0 };
     },

@@ -1,7 +1,7 @@
 {
   "type": "object",
   "$id": "schema:dotenv",
-  "required": ["PG_URL"],
+  "required": ["PG_URL", "JWT_SECRET"],
   "properties": {
     "NODE_ENV": {
       "type": "string",
@@ -15,6 +15,13 @@
     "PG_URL": {
       "type": "string",
       "examples": ["postgres://user:password@host:5432/database"]
+    },
+    "JWT_SECRET": {
+      "type": "string"
+    },
+    "JWT_EXPIRES_IN": {
+      "type": "string",
+      "default": "1h"
     }
   }
 }
