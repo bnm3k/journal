@@ -12,7 +12,6 @@ const __dirname = getFileDir(import.meta.url);
 export const options = {};
 
 export default async function (fastify, opts) {
-  console.log(import.meta.url);
   // schemas
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, "schema"),

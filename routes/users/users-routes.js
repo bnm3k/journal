@@ -1,49 +1,20 @@
 "use strict";
 import fp from "fastify-plugin";
 
-import generateHash from "./generate-hash.js";
+import usersDataSource from "./users-data-source.js";
 
 export const prefixOverride = "";
 export default fp(
   async function (fastify, opts) {
-    // store users in memory for now
-    const users = [];
-    function getUserByUsername(username) {
-      for (let i = 0; i < users.length; i++) {
-        let user = users[i];
-        if (user.username === username) {
-          if (user.deleted == true) {
-            return null;
-          }
-          return user;
-        }
-      }
-      return null;
-    }
-
-    function getUserByID(id) {
-      if (id >= users.length) {
-        return null;
-      }
-      let user = users[id];
-      if (user.deleted == true) {
-        return null;
-      }
-      return user;
-    }
-
-    function addNewUser(details) {
-      const { username, hash, salt } = details;
-      const userID = users.length;
-      users[userID] = { id: userID, username, hash, salt, deleted: false };
-      return userID;
-    }
+    fastify.register(usersDataSource);
+    const tags = ["User"]; // for openAPI docs
 
     // sign up new user
     fastify.route({
       method: "POST",
       url: "/signup",
       schema: {
+        tags,
         body: fastify.getSchema("schema:auth:signup_new_user"),
         response: {
           201: fastify.getSchema("schema:auth:operation_success"),
@@ -51,24 +22,16 @@ export default fp(
       },
       handler: async function registerHandler(request, reply) {
         const { username, password } = request.body;
-        const existingUser = getUserByUsername(username);
-        if (existingUser !== null) {
+        const alreadyExists = await fastify.users.exists(username);
+        if (alreadyExists) {
           const err = new Error("User already registered");
           err.statusCode = 409;
           throw err;
         }
 
-        try {
-          const { hash, salt } = await generateHash(password);
-          const newUserID = addNewUser({ username, hash, salt });
-          request.log.info({ userID: newUserID }, "User registered");
-          reply.code(201);
-          return { success: true };
-        } catch (err) {
-          request.log.error(err, "Failed to sign up new user");
-          reply.code(500);
-          return { success: false };
-        }
+        const newUserID = await fastify.users.addNew({ username, password });
+        reply.code(201);
+        return { success: true };
       },
     });
 
@@ -77,6 +40,7 @@ export default fp(
       method: "POST",
       url: "/login",
       schema: {
+        tags,
         body: fastify.getSchema("schema:auth:login_user"),
         response: {
           201: fastify.getSchema("schema:auth:operation_success"),
@@ -84,21 +48,13 @@ export default fp(
       },
       handler: async function loginUser(request, reply) {
         const { username, password } = request.body;
-        const user = getUserByUsername(username);
-        if (!user) {
+        const userID = await fastify.users.authenticate(username, password);
+        if (userID === null) {
           const err = new Error("Incorrect details");
           err.statusCode = 401;
           throw err;
         }
-
-        const { hash } = await generateHash(password, user.salt);
-        if (hash !== user.hash) {
-          const err = new Error("Incorrect details");
-          err.statusCode = 401;
-          throw err;
-        }
-
-        const token = await request.generateToken(user.id, user.username);
+        const token = await request.generateToken(userID, username);
         return { token };
       },
     });
@@ -109,6 +65,7 @@ export default fp(
       url: "/account",
       onRequest: fastify.authenticate,
       schema: {
+        tags,
         headers: fastify.getSchema("schema:auth:token_header"),
         response: {
           200: fastify.getSchema("schema:auth:operation_success"),
@@ -116,9 +73,7 @@ export default fp(
       },
       handler: async function getUserDetails(request, reply) {
         const { id } = request.user;
-        const user = getUserByID(id);
-        user.deleted = true; // soft delete
-        // TODO: also delete journal entries
+        await fastify.users.delete(id);
         return { success: true };
       },
     });
@@ -129,6 +84,7 @@ export default fp(
       url: "/account",
       onRequest: fastify.authenticate,
       schema: {
+        tags,
         headers: fastify.getSchema("schema:auth:token_header"),
         response: {
           200: fastify.getSchema("schema:auth:user_details"),
@@ -136,7 +92,7 @@ export default fp(
       },
       handler: async function getUserDetails(request, reply) {
         const { id } = request.user;
-        const u = getUserByID(id);
+        const u = await fastify.users.getByID(id);
         return {
           username: u.username,
           id: u.id,
@@ -147,9 +103,10 @@ export default fp(
     // refresh
     fastify.route({
       method: "POST",
-      url: "/refresh",
+      url: "/refresh_token",
       onRequest: fastify.authenticate,
       schema: {
+        tags,
         headers: fastify.getSchema("schema:auth:token_header"),
         response: {
           200: fastify.getSchema("schema:auth:token"),
@@ -171,6 +128,7 @@ export default fp(
       url: "/password",
       onRequest: fastify.authenticate,
       schema: {
+        tags,
         headers: fastify.getSchema("schema:auth:token_header"),
         body: fastify.getSchema("schema:auth:password_change"),
         response: {
@@ -179,26 +137,20 @@ export default fp(
       },
       handler: async function refreshToken(request, reply) {
         const { id } = request.user;
+        const user = await fastify.users.getByID(id);
         const { new_password, old_password } = request.body;
-        const user = getUserByID(id);
-        if (!user) {
+
+        const ok = await fastify.users.changePassword(
+          id,
+          old_password,
+          new_password
+        );
+
+        if (!ok) {
           const err = new Error("Incorrect details");
           err.statusCode = 500;
           throw err;
         }
-
-        // check if old password matches what we currently have
-        const old = await generateHash(old_password, user.salt);
-        if (old.hash !== user.hash) {
-          const err = new Error("Incorrect details");
-          err.statusCode = 401;
-          throw err;
-        }
-
-        // set new password
-        const new_ = await generateHash(new_password);
-        user.hash = new_.hash;
-        user.salt = new_.salt;
         return { success: true };
       },
     });
@@ -207,6 +159,7 @@ export default fp(
     fastify.route({
       method: "POST",
       url: "/logout",
+      schema: { tags },
       onRequest: fastify.authenticate,
       handler: async function logoutUser(request, reply) {
         request.revokeToken();

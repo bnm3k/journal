@@ -9,5 +9,5 @@ export default fp(
       connectionString: fastify.secrets.PG_URL,
     });
   },
-  { dependencies: ["application-config"] }
+  { name: "db", dependencies: ["application-config"] }
 );
