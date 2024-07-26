@@ -1,46 +1,17 @@
 "use strict";
 import fp from "fastify-plugin";
 
-import { authDataSource, userDataSource } from "./auth-data-source.js";
+import authDataSource from "./auth-data-source.js";
+import userDataSource from "../user/user-data-source.js";
 
 export const prefixOverride = "";
 export default fp(
   async function (fastify, opts) {
     fastify.register(authDataSource);
     fastify.register(userDataSource);
-    const tags = ["User"]; // for openAPI docs
+    const tags = ["Auth"]; // for openAPI docs
 
-    // sign up new user
-    fastify.route({
-      method: "POST",
-      url: "/signup",
-      schema: {
-        tags,
-        body: fastify.getSchema("schema:auth:signup_new_user"),
-        response: {
-          201: fastify.getSchema("schema:auth:operation_success"),
-        },
-      },
-      handler: async function registerHandler(request, reply) {
-        const { username, password } = request.body;
-        const alreadyExists = await fastify.user.exists(username);
-        if (alreadyExists) {
-          const err = new Error("User already registered");
-          err.statusCode = 409;
-          throw err;
-        }
-
-        // add account TODO handle race condition, where other user signs up
-        // with same username
-        const newUserID = await fastify.user.addNew({ username });
-        // add login details
-        await fastify.auth.addNewLoginDetails(newUserID, password);
-
-        reply.code(201);
-        return { success: true };
-      },
-    });
-
+    // AUTH (auth, user)
     // login user & authenticate
     fastify.route({
       method: "POST",
@@ -49,7 +20,7 @@ export default fp(
         tags,
         body: fastify.getSchema("schema:auth:login_user"),
         response: {
-          201: fastify.getSchema("schema:auth:operation_success"),
+          201: fastify.getSchema("schema:common:operation_success"),
         },
       },
       handler: async function loginUser(request, reply) {
@@ -71,48 +42,7 @@ export default fp(
       },
     });
 
-    // delete user account
-    fastify.route({
-      method: "DELETE",
-      url: "/account",
-      onRequest: fastify.authenticate,
-      schema: {
-        tags,
-        headers: fastify.getSchema("schema:auth:token_header"),
-        response: {
-          200: fastify.getSchema("schema:auth:operation_success"),
-        },
-      },
-      handler: async function getUserDetails(request, reply) {
-        const { id } = request.user;
-        await fastify.auth.deleteLoginDetails(id);
-        await fastify.user.delete(id);
-        return { success: true };
-      },
-    });
-
-    // get user details
-    fastify.route({
-      method: "GET",
-      url: "/account",
-      onRequest: fastify.authenticate,
-      schema: {
-        tags,
-        headers: fastify.getSchema("schema:auth:token_header"),
-        response: {
-          200: fastify.getSchema("schema:auth:user_details"),
-        },
-      },
-      handler: async function getUserDetails(request, reply) {
-        const { id } = request.user;
-        const u = await fastify.user.getByID(id);
-        return {
-          username: u.username,
-          id: u.id,
-        };
-      },
-    });
-
+    // AUTH
     // refresh
     fastify.route({
       method: "POST",
@@ -135,6 +65,7 @@ export default fp(
       },
     });
 
+    // AUTH (auth)
     // update password
     fastify.route({
       method: "PUT",
@@ -145,7 +76,7 @@ export default fp(
         headers: fastify.getSchema("schema:auth:token_header"),
         body: fastify.getSchema("schema:auth:password_change"),
         response: {
-          200: fastify.getSchema("schema:auth:operation_success"),
+          200: fastify.getSchema("schema:common:operation_success"),
         },
       },
       handler: async function refreshToken(request, reply) {
@@ -167,6 +98,7 @@ export default fp(
       },
     });
 
+    // AUTH
     // logout
     fastify.route({
       method: "POST",
