@@ -2,7 +2,7 @@
 import fp from "fastify-plugin";
 import generateHash from "./generate-hash.js";
 
-const usersDataSource = fp(
+const authDataSource = fp(
   async function (fastify, opts) {
     // store users in memory for now
     const users = [];
@@ -102,4 +102,4 @@ const usersDataSource = fp(
   { dependencies: ["db"] }
 );
 
-export default usersDataSource;
+export default authDataSource;

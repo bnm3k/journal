@@ -1,12 +1,12 @@
 "use strict";
 import fp from "fastify-plugin";
 
-import usersDataSource from "./users-data-source.js";
+import authDataSource from "./auth-data-source.js";
 
 export const prefixOverride = "";
 export default fp(
   async function (fastify, opts) {
-    fastify.register(usersDataSource);
+    fastify.register(authDataSource);
     const tags = ["User"]; // for openAPI docs
 
     // sign up new user
