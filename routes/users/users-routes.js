@@ -54,7 +54,7 @@ export default fp(
           err.statusCode = 401;
           throw err;
         }
-        const token = await request.generateToken(userID, username);
+        const token = await request.generateToken(userID);
         return { token };
       },
     });
@@ -113,11 +113,11 @@ export default fp(
         },
       },
       handler: async function refreshToken(request, reply) {
-        const { id, username } = request.user;
+        const { id } = request.user;
         // ensure current token is expired
         request.revokeToken();
         // generate new token
-        const token = await request.generateToken(id, username);
+        const token = await request.generateToken(id);
         return { token };
       },
     });

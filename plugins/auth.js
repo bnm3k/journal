@@ -30,12 +30,12 @@ export default fp(
 
     fastify.decorateRequest(
       "generateToken",
-      async function generateToken(userID, username) {
-        if (userID === undefined || userID === null || !username) {
+      async function generateToken(userID) {
+        if (userID === undefined || userID === null) {
           throw new Error("userID and/or username empty: ");
         }
         const token = await fastify.jwt.sign(
-          { id: String(userID), username },
+          { id: String(userID) },
           {
             jti: String(Date.now()),
             expiresIn: fastify.secrets.JWT_EXPIRE_IN,
