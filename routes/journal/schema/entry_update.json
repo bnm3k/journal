@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "content": {
+      "type": "string"
+    }
+  }
+}

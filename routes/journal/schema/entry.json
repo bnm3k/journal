@@ -1,8 +1,11 @@
 {
   "type": "object",
-  "required": ["title", "content"],
+  "required": ["title", "category", "content"],
   "properties": {
     "title": {
+      "type": "string"
+    },
+    "category": {
       "type": "string"
     },
     "content": {

@@ -14,6 +14,12 @@ export default fp(
       onRequest: fastify.authenticate,
       schema: {
         tags,
+        response: {
+          200: {
+            type: "array",
+            items: fastify.getSchema("schema:journal:entry"),
+          },
+        },
       },
       handler: async function getEntries(request, reply) {
         const { id: userID } = request.user;
@@ -29,6 +35,9 @@ export default fp(
       onRequest: fastify.authenticate,
       schema: {
         tags,
+        response: {
+          200: fastify.getSchema("schema:journal:entry"),
+        },
       },
       handler: async function getEntry(request, reply) {
         const { id: userID } = request.user;
@@ -49,6 +58,8 @@ export default fp(
       onRequest: fastify.authenticate,
       schema: {
         tags,
+        body: fastify.getSchema("schema:journal:entry"),
+        response: { 200: fastify.getSchema("schema:journal:entry_id") },
       },
       handler: async function createEntry(request, reply) {
         const { id: userID } = request.user;
@@ -65,6 +76,7 @@ export default fp(
       onRequest: fastify.authenticate,
       schema: {
         tags,
+        body: fastify.getSchema("schema:journal:entry_update"),
       },
       handler: async function updateEntry(request, reply) {
         const { id: userID } = request.user;
