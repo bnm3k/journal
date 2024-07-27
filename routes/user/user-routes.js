@@ -45,6 +45,26 @@ export default fp(
       },
     });
 
+    // update username
+    fastify.route({
+      method: "PUT",
+      url: "/username",
+      onRequest: fastify.authenticate,
+      schema: {
+        tags,
+        body: fastify.getSchema("schema:user:username_change"),
+        response: {
+          200: fastify.getSchema("schema:common:operation_success"),
+        },
+      },
+      handler: async function refreshToken(request, reply) {
+        const { id } = request.user;
+        const { username } = request.body;
+        await fastify.user.updateUsername(id, username);
+        return { success: true };
+      },
+    });
+
     // USER (auth, user)
     // delete user account
     fastify.route({

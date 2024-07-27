@@ -71,6 +71,20 @@ def main():
     assert got.get("success") == True, f"got: {got}"
     print("changing password succeeds")
 
+    # change username
+    headers = {}
+    new_username = f"NEW_{username}"
+    username_change = {"username": new_username}
+    res = requests.put(
+        url("/username"),
+        headers=with_auth(headers, token),
+        json=username_change,
+    )
+    got = res.json()
+    username = new_username
+    assert got.get("success") == True, f"got: {got}"
+    print("changing username succeeds")
+
     # get user details
     headers = {}
     res = requests.get(

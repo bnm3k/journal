@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "required": ["username"],
+  "properties": {
+    "username": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_]{3,50}$",
+      "maxLength": 50
+    }
+  }
+}

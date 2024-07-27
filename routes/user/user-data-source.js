@@ -56,6 +56,19 @@ const userDataSource = fp(
       }
     }
 
+    async function updateUsername(userID, username) {
+      const client = await fastify.pg.connect();
+      try {
+        // update username
+        await client.query("update users set username=$2 where id=$1", [
+          userID,
+          username,
+        ]);
+      } finally {
+        client.release();
+      }
+    }
+
     async function delete_(id) {
       // it is assumed that delete cascades to auth and journal entries
       const client = await fastify.pg.connect();
@@ -68,6 +81,7 @@ const userDataSource = fp(
 
     fastify.decorate("user", {
       usernameToID: usernameToID,
+      updateUsername: updateUsername,
       exists: exists,
       getByID: getByID,
       addNew: addNew,
