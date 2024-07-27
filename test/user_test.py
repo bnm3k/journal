@@ -45,7 +45,9 @@ def main():
 
     # referesh token
     headers = {}
-    res = requests.post(url("/refresh"), headers=with_auth(headers, token))
+    res = requests.post(
+        url("/refresh_token"), headers=with_auth(headers, token)
+    )
     got = res.json()
     old_token = token
     token = got.get("token")
