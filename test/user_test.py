@@ -19,6 +19,7 @@ def main():
 
     # try signing up again
     res = requests.post(url("/signup"), json=user_details)
+    assert res.status_code == 409
     got = res.json()
     assert got.get("error") is not None
     print("signing up new user with same details fails")

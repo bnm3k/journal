@@ -98,7 +98,9 @@ def main():
             json={field: update},
         )
         got = get_journal_entry(entry_ID)
-        assert got.get(field) == update
+        assert (
+            got.get(field) == update
+        ), f"update {field} of entry {entry_ID}, expect: {update}, got: {got.get(field)}"
         print(f"update {field} of entry")
 
     # make updates
@@ -139,7 +141,7 @@ def main():
 
     got = get_journal_entry(first_entry_ID)
     print("getting journal entry that does not exist returns null")
-    assert got is notFound
+    assert got is notFound, f"got is {got}"
 
     # get all entries, assert that number is 1
     entries = get_entries()
