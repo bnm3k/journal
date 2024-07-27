@@ -3,12 +3,14 @@ import fp from "fastify-plugin";
 
 import userDataSource from "./user-data-source.js";
 import authDataSource from "../auth/auth-data-source.js";
+import journalDataSource from "../journal/journal-data-source.js";
 
 export const prefixOverride = "";
 export default fp(
   async function (fastify, opts) {
     fastify.register(authDataSource);
     fastify.register(userDataSource);
+    fastify.register(journalDataSource);
     const tags = ["User"]; // for openAPI docs
 
     // USER (user, auth)
@@ -59,6 +61,8 @@ export default fp(
         const { id } = request.user;
         await fastify.auth.deleteLoginDetails(id);
         await fastify.user.delete(id);
+        await fastify.journal.deleteAllEntries(id);
+        // TODO revoke token? log out?
         return { success: true };
       },
     });
