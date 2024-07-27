@@ -1,19 +1,23 @@
 "use strict";
 import fp from "fastify-plugin";
 
-const users = [];
-
 const userDataSource = fp(
   async function (fastify, opts) {
-    // store users in memory for now
     async function usernameToID(username) {
-      for (let id = 0; id < users.length; id++) {
-        let user = users[id];
-        if (user.username === username && user.deleted === false) {
-          return id;
+      const client = await fastify.pg.connect();
+      try {
+        const { rows } = await client.query(
+          "select id from users where username = $1",
+          [username]
+        );
+        if (rows.length > 0) {
+          return rows[0].id;
+        } else {
+          return null;
         }
+      } finally {
+        client.release();
       }
-      return null;
     }
 
     async function exists(username) {
@@ -22,23 +26,44 @@ const userDataSource = fp(
     }
 
     async function getByID(id) {
-      let user = users[id];
-      if (user.deleted === true) {
-        return null;
+      const client = await fastify.pg.connect();
+      try {
+        const { rows } = await client.query(
+          "select id, username from users where id = $1",
+          [id]
+        );
+        if (rows.length == 1) {
+          return rows[0];
+        } else {
+          return null;
+        }
+      } finally {
+        client.release();
       }
-      return user;
     }
 
     async function addNew({ username }) {
-      const userID = users.length;
-      users[userID] = { id: userID, username, deleted: false };
-      return userID;
+      const client = await fastify.pg.connect();
+      try {
+        // insert user
+        const { rows } = await client.query(
+          "insert into users(username) values ($1) returning id",
+          [username]
+        );
+        return rows[0].id; // user ID
+      } finally {
+        client.release();
+      }
     }
 
     async function delete_(id) {
-      const user = await getByID(id);
-      user.deleted = true; // soft delete
-      // TODO: also delete journal entries & auth details
+      // it is assumed that delete cascades to auth and journal entries
+      const client = await fastify.pg.connect();
+      try {
+        await client.query("delete from users where id = $1", [id]);
+      } finally {
+        client.release();
+      }
     }
 
     fastify.decorate("user", {
