@@ -1,12 +1,12 @@
 begin;
 
-create table users(
+create table if not exists users(
     id serial primary key,
     username text not null unique
 );
 
 
-create table auth(
+create table if not exists auth(
     user_id int not null,
     hash text not null,
     salt text not null,
@@ -15,7 +15,7 @@ create table auth(
         on delete cascade
 );
 
-create table journal(
+create table if not exists journal(
     id serial,
     user_id int not null,
     created_at timestamptz default now(),
