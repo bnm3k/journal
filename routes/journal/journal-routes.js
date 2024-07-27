@@ -35,9 +35,10 @@ export default fp(
         const { id: entryID } = request.params;
         const entry = await fastify.journal.getOne(userID, entryID);
         if (!entry) {
-          return null;
+          reply.status(404).send();
+        } else {
+          return entry;
         }
-        return entry;
       },
     });
 
