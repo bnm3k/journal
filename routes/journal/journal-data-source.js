@@ -1,5 +1,7 @@
 "use strict";
 import fp from "fastify-plugin";
+import QueryStream from "pg-query-stream";
+import JSONStream from "JSONStream";
 
 const journalDataSource = fp(
   async function (fastify, opts) {
@@ -58,15 +60,15 @@ const journalDataSource = fp(
 
     async function getAll(userID) {
       const client = await fastify.pg.connect();
-      try {
-        const { rows } = await client.query(
-          `select id as "entryID", title, created_at, category, content from journal where user_id = $1`,
-          [userID]
-        );
-        return rows;
-      } finally {
+      const query = new QueryStream(
+        `select id as "entryID", title, created_at, category, content from journal where user_id = $1`,
+        [userID]
+      );
+      const stream = client.query(query);
+      stream.on("end", () => {
         client.release();
-      }
+      });
+      return stream.pipe(JSONStream.stringify());
     }
 
     async function deleteEntry(userID, entryID) {

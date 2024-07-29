@@ -215,3 +215,10 @@ python test/journal_test.py
   are exposed to API users. User IDs use serial (probably should change to
   bigserial) since they are not exposed to users. Reason:
   [Why Auto Increment Is A Terrible Idea](https://www.clever-cloud.com/blog/engineering/2015/05/20/why-auto-increment-is-a-terrible-idea/)
+- The endpoint for retrieving all journal entries for a user streams results
+  directly from the datatabse to the client rather than batching up the entries.
+  For users with few journal entries, the gains from this approach is
+  negligible; however for users with numerous journal entries, the streaming
+  approach should be faster and more memory efficient. For further details on
+  how this works, check out
+  [Streaming PostgreSQL data with Fastify](https://backend.cafe/streaming-postgresql-data-with-fastify)
