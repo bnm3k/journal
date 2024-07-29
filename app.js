@@ -9,7 +9,12 @@ import { getFileDir } from "./app/util.js";
 const __dirname = getFileDir(import.meta.url);
 
 // Pass --options via CLI arguments in command to enable these options.
-export const options = {};
+export const options = {
+  disableRequestLogging: true,
+  logger: {
+    level: "info",
+  },
+};
 
 export default async function (fastify, opts) {
   // schemas
