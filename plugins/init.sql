@@ -1,5 +1,7 @@
 begin;
 
+create extension if not exists "uuid-ossp";
+
 create table if not exists users(
     id serial primary key,
     username text not null unique
@@ -16,7 +18,7 @@ create table if not exists auth(
 );
 
 create table if not exists journal(
-    id serial,
+    id uuid primary key default uuid_generate_v4(),
     user_id int not null,
     created_at timestamptz default now(),
     title text not null,

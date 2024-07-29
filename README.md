@@ -208,3 +208,10 @@ To run the journal CRUD tests:
 ```
 python test/journal_test.py
 ```
+
+## Miscellaneous Notes
+
+- Journal entries use UUIDs as their primary keys rather than serial since they
+  are exposed to API users. User IDs use serial (probably should change to
+  bigserial) since they are not exposed to users. Reason:
+  [Why Auto Increment Is A Terrible Idea](https://www.clever-cloud.com/blog/engineering/2015/05/20/why-auto-increment-is-a-terrible-idea/)
