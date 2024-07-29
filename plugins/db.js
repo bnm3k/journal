@@ -16,6 +16,7 @@ function sleep(s) {
 
 async function initDB(fastify) {
   const initSQL = fs.readFileSync(path.join(__dirname, "init.sql"), "utf-8");
+  fastify.log.info({ pgURL: fastify.secrets.PG_URL }, "Connect to db attempt");
   let retries = 10;
   while (true) {
     if (retries == 0) {
