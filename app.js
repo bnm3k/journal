@@ -44,7 +44,7 @@ export default async function (fastify, opts) {
   // define your routes in one of these
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, "routes"),
-    indexPattern: /^.*-routes\.js$/i,
+    indexPattern: /^index\.js$/i,
     ignorePattern: /.*\.js/,
     autoHooksPattern: /.*hooks\.js$/i,
     autoHooks: true,

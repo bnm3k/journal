@@ -1,6 +1,6 @@
 "use strict";
 import fp from "fastify-plugin";
-import journalDataSource from "./journal-data-source.js";
+import journalDataSource from "./data-source.js";
 
 export default fp(
   async function (fastify, opts) {

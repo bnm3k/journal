@@ -1,9 +1,9 @@
 "use strict";
 import fp from "fastify-plugin";
 
-import userDataSource from "./user-data-source.js";
-import authDataSource from "../auth/auth-data-source.js";
-import journalDataSource from "../journal/journal-data-source.js";
+import userDataSource from "./data-source.js";
+import authDataSource from "../auth/data-source.js";
+import journalDataSource from "../journal/data-source.js";
 
 export const prefixOverride = "";
 export default fp(
@@ -77,7 +77,7 @@ export default fp(
           200: fastify.getSchema("schema:common:operation_success"),
         },
       },
-      handler: async function getUserDetails(request, reply) {
+      handler: async function deleteUserDetails(request, reply) {
         const { id } = request.user;
         await fastify.auth.deleteLoginDetails(id);
         await fastify.user.delete(id);

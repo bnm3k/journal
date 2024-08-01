@@ -1,7 +1,7 @@
 "use strict";
 import fp from "fastify-plugin";
 
-import authDataSource from "./auth-data-source.js";
+import authDataSource from "./data-source.js";
 
 export const prefixOverride = "";
 export default fp(
