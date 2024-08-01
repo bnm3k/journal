@@ -3,11 +3,15 @@ import fp from "fastify-plugin";
 import QueryStream from "pg-query-stream";
 import JSONStream from "JSONStream";
 
-const journalDataSource = fp(
-  async function (fastify, opts) {
-    async function addNew(userID, entry) {
+import { nullLogger } from "../../lib/util.js";
+
+function dataSource(pg, log) {
+  return {
+    pg: pg,
+    log: log || nullLogger,
+    async addNew(userID, entry, log) {
       const { title, category, content } = entry;
-      const client = await fastify.pg.connect();
+      const client = await this.pg.connect();
       try {
         // insert journal entry
         const { rows } = await client.query(
@@ -19,10 +23,11 @@ const journalDataSource = fp(
         client.release();
       }
       return entryID;
-    }
+    },
 
-    async function editEntry(userID, entryID, update) {
-      const client = await fastify.pg.connect();
+    async editEntry(userID, entryID, update, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const fields = ["title", "category", "content"];
         for (let i = 0; i < fields.length; i++) {
@@ -39,12 +44,13 @@ const journalDataSource = fp(
         client.release();
       }
       return entryID;
-    }
+    },
 
     // returns undefined if entry does not exist or user has yet to
     // create a journal entry
-    async function getOne(userID, entryID) {
-      const client = await fastify.pg.connect();
+    async getOne(userID, entryID, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const { rows } = await client.query(
           `select id as "entryID", title, created_at, category, content from journal where user_id = $1 and id = $2`,
@@ -56,10 +62,11 @@ const journalDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function getAll(userID) {
-      const client = await fastify.pg.connect();
+    async getAll(userID, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       const query = new QueryStream(
         `select id as "entryID", title, created_at, category, content from journal where user_id = $1`,
         [userID]
@@ -69,10 +76,11 @@ const journalDataSource = fp(
         client.release();
       });
       return stream.pipe(JSONStream.stringify());
-    }
+    },
 
-    async function deleteEntry(userID, entryID) {
-      const client = await fastify.pg.connect();
+    async deleteEntry(userID, entryID, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         await client.query(
           "delete from journal where user_id = $1 and id = $2",
@@ -81,27 +89,23 @@ const journalDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function deleteAllEntries(userID) {
-      const client = await fastify.pg.connect();
+    async deleteAllEntries(userID, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         await client.query("delete from journal where user_id = $1", [userID]);
       } finally {
         client.release();
       }
-    }
+    },
+  };
+}
 
-    fastify.decorate("journal", {
-      addNew: addNew,
-      editEntry: editEntry,
-      getOne: getOne,
-      getAll: getAll,
-      deleteEntry: deleteEntry,
-      deleteAllEntries: deleteAllEntries,
-    });
+export default fp(
+  async function (fastify, opts) {
+    fastify.decorate("journal", dataSource(fastify.pg));
   },
   { dependencies: ["db"] }
 );
-
-export default journalDataSource;

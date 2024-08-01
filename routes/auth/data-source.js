@@ -1,15 +1,20 @@
 "use strict";
 import fp from "fastify-plugin";
 import bcrypt from "bcrypt";
+import { nullLogger } from "../../lib/util.js";
 
-const authDataSource = fp(
-  async function (fastify, opts) {
-    const saltRounds = 10;
+function dataSource(pg, log) {
+  return {
+    pg: pg,
+    log: log || nullLogger,
+    saltRounds: 10,
 
-    async function addNewLoginDetails(userID, password) {
-      const salt = await bcrypt.genSalt(saltRounds);
+    async addNewLoginDetails(userID, password, log) {
+      log = log || this.log;
+      log.warn({ userID, password }, "addNewLoginDetails");
+      const salt = await bcrypt.genSalt(this.saltRounds);
       const hash = await bcrypt.hash(password, salt);
-      const client = await fastify.pg.connect();
+      const client = await this.pg.connect();
       try {
         const text =
           "insert into auth(user_id, hash, salt) values ($1, $2, $3)";
@@ -18,10 +23,11 @@ const authDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function usernameToID(username) {
-      const client = await fastify.pg.connect();
+    async usernameToID(username, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const { rows } = await client.query(
           "select id from users where username = $1",
@@ -35,10 +41,11 @@ const authDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function deleteLoginDetails(userID) {
-      const client = await fastify.pg.connect();
+    async deleteLoginDetails(userID, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const text = "delete from auth where user_id = $1";
         const values = [userID];
@@ -47,12 +54,13 @@ const authDataSource = fp(
         client.release();
       }
       return userID;
-    }
+    },
 
     // if user authenticate, returns their ID that can be used to generate token
     // in future, move token generation to within this module
-    async function authenticate(userID, passwordAttempt) {
-      const client = await fastify.pg.connect();
+    async authenticate(userID, passwordAttempt, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const text = "select hash, salt from auth where user_id = $1";
         const values = [userID];
@@ -63,10 +71,11 @@ const authDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function changePassword(userID, passwordAttempt, newPassword) {
-      const client = await fastify.pg.connect();
+    async changePassword(userID, passwordAttempt, newPassword, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const { rows } = await client.query(
           "select hash, salt from auth where user_id = $1",
@@ -79,7 +88,7 @@ const authDataSource = fp(
           return false;
         }
         // set new password
-        const salt = await bcrypt.genSalt(saltRounds);
+        const salt = await bcrypt.genSalt(this.saltRounds);
         const hash = await bcrypt.hash(newPassword, salt);
         await client.query(
           "update auth set hash=$2,salt=$3 where user_id = $1",
@@ -89,17 +98,13 @@ const authDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
+  };
+}
 
-    fastify.decorate("auth", {
-      addNewLoginDetails: addNewLoginDetails,
-      usernameToID: usernameToID,
-      deleteLoginDetails: deleteLoginDetails,
-      authenticate: authenticate,
-      changePassword: changePassword,
-    });
+export default fp(
+  async function (fastify, opts) {
+    fastify.decorate("auth", dataSource(fastify.pg));
   },
   { dependencies: ["db"] }
 );
-
-export default authDataSource;

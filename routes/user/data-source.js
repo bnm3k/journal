@@ -1,10 +1,16 @@
 "use strict";
 import fp from "fastify-plugin";
 
-const userDataSource = fp(
-  async function (fastify, opts) {
-    async function exists(username) {
-      const client = await fastify.pg.connect();
+import { nullLogger } from "../../lib/util.js";
+
+function dataSource(pg, log) {
+  return {
+    pg: pg,
+    log: log || nullLogger,
+
+    async exists(username, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const { rows } = await client.query(
           "select 1 from users where username = $1",
@@ -14,10 +20,11 @@ const userDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function getByID(id) {
-      const client = await fastify.pg.connect();
+    async getByID(id, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         const { rows } = await client.query(
           "select id, username from users where id = $1",
@@ -31,10 +38,11 @@ const userDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function addNew({ username }) {
-      const client = await fastify.pg.connect();
+    async addNew({ username }, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         // insert user
         const { rows } = await client.query(
@@ -45,10 +53,11 @@ const userDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function updateUsername(userID, username) {
-      const client = await fastify.pg.connect();
+    async updateUsername(userID, username, log) {
+      log = log || this.log;
+      const client = await this.pg.connect();
       try {
         // update username
         await client.query("update users set username=$2 where id=$1", [
@@ -58,27 +67,24 @@ const userDataSource = fp(
       } finally {
         client.release();
       }
-    }
+    },
 
-    async function delete_(id) {
+    async delete(id, log) {
+      log = log || this.log;
       // it is assumed that delete cascades to auth and journal entries
-      const client = await fastify.pg.connect();
+      const client = await this.pg.connect();
       try {
         await client.query("delete from users where id = $1", [id]);
       } finally {
         client.release();
       }
-    }
+    },
+  };
+}
 
-    fastify.decorate("user", {
-      updateUsername: updateUsername,
-      exists: exists,
-      getByID: getByID,
-      addNew: addNew,
-      delete: delete_,
-    });
+export default fp(
+  async function (fastify, opts) {
+    fastify.decorate("user", dataSource(fastify.pg));
   },
   { dependencies: ["db"] }
 );
-
-export default userDataSource;
