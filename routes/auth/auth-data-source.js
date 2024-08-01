@@ -20,6 +20,23 @@ const authDataSource = fp(
       }
     }
 
+    async function usernameToID(username) {
+      const client = await fastify.pg.connect();
+      try {
+        const { rows } = await client.query(
+          "select id from users where username = $1",
+          [username]
+        );
+        if (rows.length > 0) {
+          return rows[0].id;
+        } else {
+          return null;
+        }
+      } finally {
+        client.release();
+      }
+    }
+
     async function deleteLoginDetails(userID) {
       const client = await fastify.pg.connect();
       try {
@@ -76,6 +93,7 @@ const authDataSource = fp(
 
     fastify.decorate("auth", {
       addNewLoginDetails: addNewLoginDetails,
+      usernameToID: usernameToID,
       deleteLoginDetails: deleteLoginDetails,
       authenticate: authenticate,
       changePassword: changePassword,

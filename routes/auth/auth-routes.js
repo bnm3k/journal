@@ -2,16 +2,14 @@
 import fp from "fastify-plugin";
 
 import authDataSource from "./auth-data-source.js";
-import userDataSource from "../user/user-data-source.js";
 
 export const prefixOverride = "";
 export default fp(
   async function (fastify, opts) {
     fastify.register(authDataSource);
-    fastify.register(userDataSource);
     const tags = ["Auth"]; // for openAPI docs
 
-    // AUTH (auth, user)
+    // AUTH (auth)
     // login user & authenticate
     fastify.route({
       method: "POST",
@@ -25,7 +23,7 @@ export default fp(
       },
       handler: async function loginUser(request, reply) {
         const { username, password } = request.body;
-        const userID = await fastify.user.usernameToID(username);
+        const userID = await fastify.auth.usernameToID(username);
         if (userID === null) {
           const err = new Error("Incorrect details");
           err.statusCode = 401;

@@ -3,26 +3,17 @@ import fp from "fastify-plugin";
 
 const userDataSource = fp(
   async function (fastify, opts) {
-    async function usernameToID(username) {
+    async function exists(username) {
       const client = await fastify.pg.connect();
       try {
         const { rows } = await client.query(
-          "select id from users where username = $1",
+          "select 1 from users where username = $1",
           [username]
         );
-        if (rows.length > 0) {
-          return rows[0].id;
-        } else {
-          return null;
-        }
+        return rows.length > 0;
       } finally {
         client.release();
       }
-    }
-
-    async function exists(username) {
-      const id = await usernameToID(username);
-      return id !== null;
     }
 
     async function getByID(id) {
@@ -80,7 +71,6 @@ const userDataSource = fp(
     }
 
     fastify.decorate("user", {
-      usernameToID: usernameToID,
       updateUsername: updateUsername,
       exists: exists,
       getByID: getByID,
