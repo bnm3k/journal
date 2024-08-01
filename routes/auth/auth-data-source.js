@@ -1,13 +1,14 @@
 "use strict";
 import fp from "fastify-plugin";
-import generateHash from "./generate-hash.js";
+import bcrypt from "bcrypt";
 
 const authDataSource = fp(
   async function (fastify, opts) {
-    // store auth details in memory for now
+    const saltRounds = 10;
 
     async function addNewLoginDetails(userID, password) {
-      const { hash, salt } = await generateHash(password);
+      const salt = await bcrypt.genSalt(saltRounds);
+      const hash = await bcrypt.hash(password, salt);
       const client = await fastify.pg.connect();
       try {
         const text =
@@ -40,9 +41,8 @@ const authDataSource = fp(
         const values = [userID];
         const { rows } = await client.query(text, values);
         const curr = rows[0];
-        const attempt = await generateHash(passwordAttempt, curr.salt);
-        // timing attacks? handle?
-        return attempt.hash === curr.hash;
+        const isMatch = await bcrypt.compare(passwordAttempt, curr.hash);
+        return isMatch;
       } finally {
         client.release();
       }
@@ -57,16 +57,16 @@ const authDataSource = fp(
         );
         const curr = rows[0];
         // check if old password matches what we currently have
-        const attempt = await generateHash(passwordAttempt, curr.salt);
-        if (attempt.hash !== curr.hash) {
-          // timing attacks? handle?
+        const isMatch = await bcrypt.compare(passwordAttempt, curr.hash);
+        if (!isMatch) {
           return false;
         }
         // set new password
-        const new_ = await generateHash(newPassword);
+        const salt = await bcrypt.genSalt(saltRounds);
+        const hash = await bcrypt.hash(newPassword, salt);
         await client.query(
           "update auth set hash=$2,salt=$3 where user_id = $1",
-          [userID, new_.hash, new_.salt]
+          [userID, hash, salt]
         );
         return true;
       } finally {
