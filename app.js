@@ -19,7 +19,7 @@ export const options = {
 export default async function (fastify, opts) {
   // schemas
   fastify.register(AutoLoad, {
-    dir: path.join(__dirname, "schema"),
+    dir: path.join(__dirname, "lib", "schema"),
     indexPattern: /^loader.js$/i,
   });
 
@@ -34,7 +34,7 @@ export default async function (fastify, opts) {
   // those should be support plugins that are reused
   // through your application
   fastify.register(AutoLoad, {
-    dir: path.join(__dirname, "plugins"),
+    dir: path.join(__dirname, "lib", "plugins"),
     ignorePattern: /.*.no-load\.js/,
     indexPattern: /^no$/i,
     options: Object.assign({}, fastify.config),
