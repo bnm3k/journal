@@ -5,7 +5,7 @@
 
 import { build as buildApplication } from "fastify-cli/helper";
 import path from "node:path";
-import { getFileDir } from "../app/util.js";
+import { getFileDir } from "../lib/util.js";
 
 const __dirname = getFileDir(import.meta.url);
 

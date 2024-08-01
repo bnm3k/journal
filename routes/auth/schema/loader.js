@@ -3,7 +3,7 @@ import path from "path";
 
 import fp from "fastify-plugin";
 
-import { getFileDir, addAllSchema } from "../../../app/util.js";
+import { getFileDir, addAllSchema } from "../../../lib/util.js";
 
 export default fp(function (fastify, opts, next) {
   const __dirname = getFileDir(import.meta.url);

@@ -2,7 +2,7 @@ import swagger from "@fastify/swagger";
 import docsUI from "@scalar/fastify-api-reference";
 import fp from "fastify-plugin";
 
-import { version } from "../app/util.js";
+import { version } from "../lib/util.js";
 
 export default fp(
   async function (fastify, opts) {
