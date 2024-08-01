@@ -3,7 +3,7 @@
 import path from "node:path";
 import AutoLoad from "@fastify/autoload";
 
-import config from "./config/config.js";
+import config from "./lib/config/config.js";
 import { getFileDir } from "./lib/util.js";
 
 const __dirname = getFileDir(import.meta.url);
