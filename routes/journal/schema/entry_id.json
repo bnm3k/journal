@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "entryID": {
-      "type": "number"
+      "type": "string"
     }
   }
 }

@@ -56,13 +56,7 @@ def main():
         else:
             return res.json()
 
-    # get single entry that does not exist
-    got = get_journal_entry(0)
-    assert got == notFound
-    print("getting journal entry that does not exist returns null")
-
     # add new entry
-
     def add_entry(entry):
         headers = {}
         res = requests.post(
@@ -136,8 +130,8 @@ def main():
     print("delete first entry")
 
     got = get_journal_entry(second_entry_ID)
-    print("can still get second entry")
     assert got is not None
+    print("can still get second entry")
 
     got = get_journal_entry(first_entry_ID)
     print("getting journal entry that does not exist returns null")
