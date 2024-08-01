@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import QueryStream from "pg-query-stream";
 import JSONStream from "JSONStream";
 
-import { nullLogger } from "../../lib/util.js";
+import { nullLogger } from "app/util";
 
 function dataSource(pg, log) {
   return {

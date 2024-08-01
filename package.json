@@ -1,7 +1,7 @@
 {
-  "name": "journal_app",
+  "name": "app",
   "version": "0.1.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "REST API for a journal app",
   "type": "module",
   "main": "app.js",
   "directories": {
@@ -11,6 +11,9 @@
     "test": "node --test test/**/*.test.js",
     "start": "fastify start -l info --options app.js",
     "dev": "npm run start -- --watch --pretty-logs"
+  },
+  "exports": {
+    "./util": "./lib/util.js"
   },
   "keywords": [],
   "author": "",

@@ -1,9 +1,6 @@
-import fs from "fs";
-import path from "path";
-
 import fp from "fastify-plugin";
 
-import { getFileDir, addAllSchema } from "../../../lib/util.js";
+import { getFileDir, addAllSchema } from "app/util";
 
 export default fp(function (fastify, opts, next) {
   const __dirname = getFileDir(import.meta.url);

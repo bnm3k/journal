@@ -1,7 +1,7 @@
 "use strict";
 import fp from "fastify-plugin";
 import bcrypt from "bcrypt";
-import { nullLogger } from "../../lib/util.js";
+import { nullLogger } from "app/util";
 
 function dataSource(pg, log) {
   return {
